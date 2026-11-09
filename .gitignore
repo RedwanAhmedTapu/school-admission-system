@@ -1,0 +1,13 @@
+# .NET
+bin/
+obj/
+*.user
+.vs/
+# Node
+node_modules/
+dist/
+coverage/
+# Env / OS
+.env
+.DS_Store
+*.log
