@@ -29,13 +29,17 @@ public class ClassService(AppDbContext db, TimeProvider clock)
 
     public async Task<List<ClassDto>> ListAsync(CancellationToken ct)
     {
-        var rows = await Query().OrderBy(r => r.Name).ThenBy(r => r.Id).ToListAsync(ct);
+        // Filter / order BEFORE projecting: EF cannot translate a Where/OrderBy on the members of
+        // a constructed object (new Row(...)) that contains subqueries.
+        var source = db.Classes.AsNoTracking().OrderBy(c => c.Name).ThenBy(c => c.Id);
+        var rows = await Project(source).ToListAsync(ct);
         return rows.Select(ToDto).ToList();
     }
 
     public async Task<ClassDto> GetAsync(string classId, CancellationToken ct)
     {
-        var row = await Query().Where(r => r.Id == classId).FirstOrDefaultAsync(ct)
+        var source = db.Classes.AsNoTracking().Where(c => c.Id == classId);
+        var row = await Project(source).FirstOrDefaultAsync(ct)
                   ?? throw ApiException.NotFound("class_not_found", "Class not found.");
         return ToDto(row);
     }
@@ -44,10 +48,10 @@ public class ClassService(AppDbContext db, TimeProvider clock)
 
     // Seat usage is derived from hold rows on every read - there is no stored counter to drift.
     // A HELD row past its deadline no longer counts, even before the sweeper marks it EXPIRED.
-    private IQueryable<Row> Query()
+    private IQueryable<Row> Project(IQueryable<SchoolClass> source)
     {
         var now = clock.GetUtcNow().UtcDateTime;
-        return db.Classes.AsNoTracking().Select(c => new Row(
+        return source.Select(c => new Row(
             c.Id,
             c.Name,
             c.TotalSeats,
