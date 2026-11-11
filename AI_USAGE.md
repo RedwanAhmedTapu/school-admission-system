@@ -10,14 +10,12 @@ developer and new to C#/.NET, so I used the AI for the C# code and for the proje
 - Ran the backend tests in Docker, read the failure logs, applied the fixes and re-ran until all passed.
 - Ran `docker compose up --build` and checked the API with curl.
 - Split the work into incremental commits and prepared the repository for submission.
-- [Add here ONLY things you really did yourself, e.g. "wrote the test X", "changed Y", "reviewed Z".]
 
 ## Verification I did
 - `docker compose --profile test run --rm backend-tests` -> 27 tests, 27 passed against real PostgreSQL 16
   (60 parallel hold requests for 5 seats, 15 parallel applies by one student, expiry by moving the clock).
 - `docker compose up --build`: db, backend, frontend started; migration applied; 5 demo classes seeded;
   expiry worker ran every 5 seconds. `GET /classes` and `POST /classes/{id}/holds` (201, HELD) checked with curl.
-- UI walkthrough: [WRITE ONLY WHAT YOU REALLY DID]
 
 ## Checks done by the AI in its own sandbox (not by me)
 Frontend typecheck/build, 18 frontend unit tests, a headless-browser run against a mock API, and a shell simulation
