@@ -94,3 +94,15 @@ frontend/src                  app, components/ui (design system), layouts, pages
 
 See `ASSUMPTIONS.md` and `AI_USAGE.md` (read the *verification status* section in both).
 # school-admission-system
+
+## Running in GitHub Codespaces (optional)
+
+On a normal machine nothing extra is needed: open http://localhost:3000.
+
+In Codespaces the forwarded ports are private by default, so the browser cannot call the API.
+In the Ports tab set the backend port (8080) visibility to **Public**, then point the frontend at it:
+
+    echo "API_URL=https://${CODESPACE_NAME}-8080.app.github.dev" > .env
+    docker compose up -d --build
+
+Then open the forwarded URL of port 3000.
