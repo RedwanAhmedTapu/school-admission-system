@@ -1,34 +1,36 @@
 # AI usage
 
-## Tools
-Claude (Anthropic, via Claude Code in a cloud sandbox) generated the project from the assignment brief: backend, frontend,
-tests, Docker files and documentation.
+## Tool and scope
+I used Claude (Anthropic) through Claude Code / claude.ai. The AI generated most of the code: the .NET backend,
+the React frontend, the tests, the Dockerfiles and the first drafts of these documents. I am a Node.js/Express
+developer and new to C#/.NET, so I used the AI for the C# code and for the project structure.
 
-## Verification status (read this first)
+## My part
+- Set up the environment (Docker/WSL problems on my PC, then GitHub Codespaces) and ran everything.
+- Ran the backend tests in Docker, read the failure logs, applied the fixes and re-ran until all passed.
+- Ran `docker compose up --build` and checked the API with curl.
+- Split the work into incremental commits and prepared the repository for submission.
+- [Add here ONLY things you really did yourself, e.g. "wrote the test X", "changed Y", "reviewed Z".]
 
-What was **actually run** while building:
+## Verification I did
+- `docker compose --profile test run --rm backend-tests` -> 27 tests, 27 passed against real PostgreSQL 16
+  (60 parallel hold requests for 5 seats, 15 parallel applies by one student, expiry by moving the clock).
+- `docker compose up --build`: db, backend, frontend started; migration applied; 5 demo classes seeded;
+  expiry worker ran every 5 seconds. `GET /classes` and `POST /classes/{id}/holds` (201, HELD) checked with curl.
+- UI walkthrough: [WRITE ONLY WHAT YOU REALLY DID]
 
-| Check | Result |
-|---|---|
-| Frontend `tsc --noEmit` and `vite build` | pass |
-| Frontend Vitest suite (18 tests) | pass |
-| Built frontend driven in headless Chromium against a **mock API** that imitates the contract: ID validation, ID persistence after refresh, apply, countdown, refresh keeps countdown, automatic EXPIRED state with Pay disabled, apply again, pay -> CONFIRMED, admin pages, no console errors, no horizontal scroll at 390px | pass |
-| Migration SQL applied to a real PostgreSQL 16; 60 concurrent "apply" transactions for 5 seats using the same locking sequence as the C# service (`FOR UPDATE`, duplicate check, capacity check, insert) -> exactly 5 rows; 20 concurrent applies by one student -> exactly 1 row; unique index rejects a forced duplicate | pass |
+## Checks done by the AI in its own sandbox (not by me)
+Frontend typecheck/build, 18 frontend unit tests, a headless-browser run against a mock API, and a shell simulation
+of the locking SQL. The sandbox had no .NET SDK or Docker, so the backend was first compiled and tested when I ran it.
 
-What was **NOT run** (the sandbox had no .NET SDK, no Docker daemon, and could not reach NuGet/Docker registries):
-
-* The C# backend has **never been compiled or executed**, and the xUnit tests (including the real concurrency test) have **never been run**.
-* `docker compose up` has **never been run**; Dockerfiles and compose file are unverified.
-* The frontend has not been run against the real backend, only against the mock.
-
-Treat the backend as unverified code until you run `docker compose up --build` and
-`docker compose --profile test run --rm backend-tests` yourself. Compile errors or small test fixes are possible.
-
-## Mistakes made by the AI and how they were caught
-1. **Dependency mismatch**: AI installed Vite 5 together with `@vitejs/plugin-react` 6, which requires Vite 8. `npm install` failed with ERESOLVE; read the report and upgraded Vite instead of using `--force`.
-2. **TypeScript 7 pulled in by `latest`**: pinned to TypeScript 5 for a safer toolchain; typecheck and build were then run.
-3. **Lost CORS headers on errors** (found by code review, not by running): the first error middleware called `Response.Clear()`, which would also remove CORS headers, so browsers could not read 4xx bodies. Removed the call.
-4. **Test DB location**: the first local PostgreSQL attempt failed on directory permissions; moved the data directory.
-
-## Final verification you should do (add your own results here)
-Do not copy the table above as your own work. Record what **you** ran, e.g. `docker compose up` result, backend test output, and a manual walkthrough.
+## Mistakes the AI made and how they were caught
+1. **Test project missing `using Xunit`.** The Docker test build failed with many CS0246 errors. Found by running
+   the tests in Docker; fixed with a global using.
+2. **EF Core query that could not be translated.** The AI filtered with `Where` after projecting to
+   `new Row(...)`. `GET /classes/{id}` returned 500 and 12 of 27 tests failed. Found from the failing test log
+   (LINQ expression could not be translated); fixed by filtering and ordering before the projection; 27/27 passed.
+3. **Vite / plugin version mismatch** (npm ERESOLVE). Fixed by upgrading instead of using `--force`.
+4. **Error middleware cleared CORS headers** (`Response.Clear()`), hiding error bodies from the browser.
+   Found in code review, not by a test; removed.
+5. My own mistake: `docker compose run` does not rebuild an existing image, so my first fix seemed to do nothing.
+   I now run `build` before `run`.
