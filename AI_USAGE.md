@@ -16,6 +16,7 @@ developer and new to C#/.NET, so I used the AI for the C# code and for the proje
   (60 parallel hold requests for 5 seats, 15 parallel applies by one student, expiry by moving the clock).
 - `docker compose up --build`: db, backend, frontend started; migration applied; 5 demo classes seeded;
   expiry worker ran every 5 seconds. `GET /classes` and `POST /classes/{id}/holds` (201, HELD) checked with curl.
+- UI check: opened the frontend in the browser (Codespaces, port 3000) and tried it manually.
 
 ## Checks done by the AI in its own sandbox (not by me)
 Frontend typecheck/build, 18 frontend unit tests, a headless-browser run against a mock API, and a shell simulation
