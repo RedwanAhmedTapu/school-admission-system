@@ -93,7 +93,6 @@ frontend/src                  app, components/ui (design system), layouts, pages
 ```
 
 See `ASSUMPTIONS.md` and `AI_USAGE.md` (read the *verification status* section in both).
-# school-admission-system
 
 ## Running in GitHub Codespaces (optional)
 
